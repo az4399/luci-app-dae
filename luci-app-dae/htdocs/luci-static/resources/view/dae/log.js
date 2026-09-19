@@ -4,7 +4,6 @@
 'require dom';
 'require fs';
 'require poll';
-'require ui';
 'require view';
 
 return view.extend({
@@ -31,27 +30,15 @@ return view.extend({
 			}, _('Collecting data…'))
 		);
 
-		let clearingLog = false;
-		let logGeneration = 0;
-		const refreshLog = () => {
-			if (clearingLog)
-				return Promise.resolve();
-
-			const generation = logGeneration;
+		poll.add(L.bind(function() {
 			return fs.read_direct('/var/log/dae/dae.log', 'text')
 			.then(function(content) {
-				if (generation !== logGeneration)
-					return;
-
 				let log = E('pre', { 'wrap': 'pre' }, [
 					content.trim() || _('Log is empty.')
 				]);
 
 				dom.content(log_textarea, log);
 			}).catch(function(e) {
-				if (generation !== logGeneration)
-					return;
-
 				let log;
 
 				if (e.toString().includes('NotFoundError'))
@@ -65,8 +52,7 @@ return view.extend({
 
 				dom.content(log_textarea, log);
 			});
-		};
-		poll.add(refreshLog);
+		}));
 
 		const scrollDownButton = E('button', {
 				'id': 'scrollDownButton',
@@ -77,32 +63,6 @@ return view.extend({
 			scrollUpButton.scrollIntoView();
 			scrollDownButton.blur();
 		});
-
-		const clearLogButton = E('button', {
-			'id': 'clearLogButton',
-			'type': 'button',
-			'class': 'cbi-button cbi-button-neutral',
-			'style': 'margin-left: .5em',
-			'disabled': !L.hasViewPermission(),
-			'click': ui.createHandlerFn(this, () => {
-				clearingLog = true;
-				logGeneration++;
-
-				return fs.write('/var/log/dae/dae.log', '')
-				.then(() => {
-					dom.content(log_textarea, E('pre', { 'wrap': 'pre' }, [
-						_('Log is empty.')
-					]));
-				}).catch(e => {
-					ui.addNotification(null, E('p', {}, [
-						_('Failed to clear log: %s').format(e.message || e)
-					]), 'error');
-				}).finally(() => {
-					clearingLog = false;
-					return refreshLog();
-				});
-			})
-		}, _('Clear log'));
 
 		const scrollUpButton = E('button', {
 				'id' : 'scrollUpButton',
@@ -118,7 +78,7 @@ return view.extend({
 			E('style', [ css ]),
 			E('h2', {}, [ _('Log') ]),
 			E('div', {'class': 'cbi-map'}, [
-				E('div', {'style': 'padding-bottom: 20px'}, [scrollDownButton, clearLogButton]),
+				E('div', {'style': 'padding-bottom: 20px'}, [scrollDownButton]),
 				E('div', {'class': 'cbi-section'}, [
 					log_textarea,
 					E('div', {'style': 'text-align:right'},
