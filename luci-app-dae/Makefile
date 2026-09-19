@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_LICENSE:=Apache-2.0
-PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
+PKG_MAINTAINER:=ayo
 
 LUCI_TITLE:=LuCI app for dae
 LUCI_DEPENDS:=+dae +v2ray-geoip +v2ray-geosite
