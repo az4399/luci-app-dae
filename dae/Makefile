@@ -6,12 +6,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dae
 PKG_VERSION:=2.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-full-src.tar.xz
-PKG_SOURCE_URL:=https://github.com/daeuniverse/dae/releases/download/v$(PKG_VERSION)
-PKG_SOURCE_URL_FILE:=dae-full-src.tar.xz
-PKG_HASH:=7c91494a999a24e91869e8e20e26ed8171dd4eedbcb847d1b04d15a6aeb54f44
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/daeuniverse/dae.git
+PKG_SOURCE_VERSION:=main
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_SOURCE_SUBDIR)-main.tar.xz
+PKG_MIRROR_HASH:=skip
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILE:=LICENSE
@@ -23,7 +25,7 @@ PKG_BUILD_DEPENDS:=golang/host bpf-headers
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
-# Do not apply patches/010-dns-response-ttl.patch from the custom fork.
+# Only apply the architecture-specific patches selected below.
 PATCH_DIR:=
 
 # armv7 lacks a CO-RE vmlinux.h for the trace eBPF, so trace's bpf2go fails to
@@ -101,8 +103,7 @@ DAE_CFLAGS:= \
 	-I$(BPF_HEADERS_DIR)/arch/$(BPF_KARCH)/include/asm/mach-generic
 
 define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	$(TAR) -C $(PKG_BUILD_DIR) -xJf $(DL_DIR)/$(PKG_SOURCE)
+	$(PKG_UNPACK)
 	$(if $(PATCH_DIR),$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR),))
 endef
 
